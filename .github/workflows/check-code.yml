@@ -18,7 +18,7 @@ jobs:
         python-version: '3.9'
 
     - name: Run AI Agent
-      # ⭐ 이 부분이 가장 중요합니다! 금고에서 키를 꺼내오는 설정입니다.
+      # 🔑 이 env 설정이 없으면 agent.py는 키를 읽지 못해 403 에러가 납니다!
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
