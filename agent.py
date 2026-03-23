@@ -16,13 +16,11 @@ def ask_gemini_to_fix(filename, error_msg):
     prompt = f"Fix the Python error below. Output ONLY the fixed code.\nError: {error_msg}\nCode: {code}"
     
     host = "generativelanguage.googleapis.com"
-    # ⭐ 목록에서 확인된 최신 모델명을 사용합니다!
+    # ⭐ 우리 계정에서 확인된 최신 모델명입니다.
     endpoint = f"/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key={GEMINI_API_KEY}"
 
     conn = http.client.HTTPSConnection(host)
-    payload = json.dumps({
-        "contents": [{"parts": [{"text": prompt}]}]
-    })
+    payload = json.dumps({"contents": [{"parts": [{"text": prompt}]}]})
     headers = {'Content-Type': 'application/json'}
 
     try:
@@ -33,7 +31,6 @@ def ask_gemini_to_fix(filename, error_msg):
 
         if 'candidates' in data:
             fixed_code = data['candidates'][0]['content']['parts'][0]['text']
-            # 마크다운 기호(```) 제거
             return fixed_code.replace("```python", "").replace("```", "").strip()
         else:
             print(f"❌ API 실패 상세: {response_text}")
@@ -61,7 +58,6 @@ def run_and_fix(filename):
         print(f"✅ 최종 결과: {final_res.stdout if final_res.returncode == 0 else final_res.stderr}")
 
 if __name__ == "__main__":
-    # 에러 유발 파일 생성
     with open("happy.py", "w", encoding='utf-8') as f:
         f.write("print(10 / 0)")
     run_and_fix("happy.py")
