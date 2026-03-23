@@ -17,6 +17,6 @@ jobs:
     - name: Run AI Agent
       env:
         # 🔑 여기서 왼쪽 이름(GEMINI_API_KEY)이 파이썬 코드와 일치해야 합니다.
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python agent.py
