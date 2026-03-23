@@ -8,7 +8,16 @@ import json
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 def ask_gemini_to_fix(filename, error_msg):
+    # 🔍 키가 들어왔는지 확인하는 로그 (보안을 위해 앞 3자리만 출력)
+    if not GEMINI_API_KEY:
+        print("❌ [환경변수 에러] GEMINI_API_KEY가 비어있습니다. check-code.yml의 env 설정을 확인하세요.")
+        sys.exit(1)
+    else:
+        print(f"🔑 API 키 로드 성공 (앞 3자리: {GEMINI_API_KEY[:3]}...)")
+
     print("🤖 Gemini AI에게 수리를 요청하는 중...")
+    
+    # ... (나머지 코드는 성공했던 코드와 동일) ...
     
     with open(filename, 'r', encoding='utf-8') as f:
         code = f.read()
