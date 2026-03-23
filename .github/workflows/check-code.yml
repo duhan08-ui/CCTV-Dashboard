@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -18,7 +19,7 @@ jobs:
         python-version: '3.9'
 
     - name: Run AI Agent
-      # 🔑 이 env 설정이 없으면 agent.py는 키를 읽지 못해 403 에러가 납니다!
+      # 🔑 이 env 설정이 없으면 403 에러(Unregistered callers)가 발생합니다.
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
