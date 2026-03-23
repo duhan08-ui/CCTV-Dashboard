@@ -38,3 +38,4 @@ if __name__ == "__main__":
         f.write("print(sum(range(1, '11'))) # 의도적인 에러: 숫자와 문자열 더하기")
         
     run_and_fix("happy.py")
+
