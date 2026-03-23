@@ -34,6 +34,38 @@ DEFAULT_CAMERA_IDS = [
     "1013", "261", "301", "100", "36", "192", "531", "234", "243",
 ]
 TOPIS_INFO_URL = "https://topis.seoul.go.kr/map/selectCctvInfo.do"
+
+# ---------------------------------------------------------------------------
+# Route presets
+# ---------------------------------------------------------------------------
+ROUTE_PRESETS = {
+    "olympic_default": {
+        "name": "올림픽대로 (기본)",
+        "description": "올림픽대로 주요 지점",
+        "camera_ids": [
+            "1013", "261", "301", "100", "36", "192", "531", "234", "243",
+        ],
+    },
+    "apgujeong_to_sogong": {
+        "name": "압구정로데오 → 소공로46",
+        "description": "압구정로데오에서 올림픽대로를 타고 소공로 46까지",
+        "camera_ids": [
+            "375",   # 영동대교 남단(경) - 올림픽대로 진입
+            "2",     # 성수대교~영동대교 - 올림픽대로
+            "45",    # 동호대교 남단(도) - 올림픽대로
+            "261",   # 동호대교남단(경) - 올림픽대로
+            "35",    # 한남대교~동호대교 - 올림픽대로
+            "301",   # 한남대교남2 - 올림픽대로
+            "82",    # 한남IC - 경부고속도로 진출
+            "170",   # 한남동로터리 - 한남대로
+            "139",   # (남산)한남로 - 한남대로/남산
+            "126",   # (남산)하얏트 - 소월로
+            "138",   # (남산)버티고개 - 소월로
+            "140",   # (남산)회현소방서 - 소공로
+            "230",   # 회현사거리 - 소공로 (도착)
+        ],
+    },
+}
 ALLOWED_PROXY_DOMAINS = [
     "topis.seoul.go.kr",
     "cctvsec.seoul.go.kr",
@@ -211,6 +243,20 @@ class ProxyHandler(BaseHTTPRequestHandler):
             logger.info("Camera added: %s", new_id)
             self._send_json({"status": "ok", "cameras": list(CURRENT_CAMERA_IDS)})
 
+        elif parsed.path == "/api/load_route":
+            body = self._read_json_body()
+            route_id = str(body.get("route_id", "")).strip()
+            if route_id not in ROUTE_PRESETS:
+                self._send_json({"error": "Route not found."}, 404)
+                return
+            preset = ROUTE_PRESETS[route_id]
+            with _camera_lock:
+                CURRENT_CAMERA_IDS.clear()
+                CURRENT_CAMERA_IDS.extend(preset["camera_ids"])
+                _save_camera_ids(CURRENT_CAMERA_IDS)
+            logger.info("Route loaded: %s (%d cameras)", route_id, len(preset["camera_ids"]))
+            self._send_json({"status": "ok", "route": route_id, "cameras": list(CURRENT_CAMERA_IDS)})
+
         elif parsed.path == "/api/delete_camera":
             body = self._read_json_body()
             del_id = str(body.get("id", "")).strip()
@@ -241,6 +287,17 @@ class ProxyHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == "/api/health":
             self._send_json({"status": "ok", "cameras": len(CURRENT_CAMERA_IDS)})
+
+        elif parsed.path == "/api/routes":
+            routes = []
+            for key, preset in ROUTE_PRESETS.items():
+                routes.append({
+                    "id": key,
+                    "name": preset["name"],
+                    "description": preset["description"],
+                    "count": len(preset["camera_ids"]),
+                })
+            self._send_json(routes)
 
         elif parsed.path == "/api/exit":
             self._send_json({"status": "shutting_down"})
@@ -436,6 +493,9 @@ HTML_TEMPLATE = """<!doctype html>
     </header>
 
     <div class="control-panel">
+        <select id="routeSelect" onchange="loadRoute(this.value)" style="padding:10px 14px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:white; font-size:14px; cursor:pointer; min-width:200px;">
+            <option value="">-- 경로 프리셋 선택 --</option>
+        </select>
         <input type="text" id="camIdInput"
                placeholder="추가할 CCTV ID 입력 (예: 101, 261 등)"
                onkeydown="if(event.key==='Enter') addCamera()">
@@ -613,6 +673,38 @@ HTML_TEMPLATE = """<!doctype html>
             } catch(e) {}
         }
 
+        async function loadRoutes() {
+            try {
+                var res = await fetch('/api/routes');
+                var routes = await res.json();
+                var sel = document.getElementById('routeSelect');
+                routes.forEach(function(r) {
+                    var opt = document.createElement('option');
+                    opt.value = r.id;
+                    opt.textContent = r.name + ' (' + r.count + '대)';
+                    sel.appendChild(opt);
+                });
+            } catch(e) {}
+        }
+
+        async function loadRoute(routeId) {
+            if (!routeId) return;
+            try {
+                var res = await fetch('/api/load_route', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({route_id: routeId})
+                });
+                var data = await res.json();
+                if (data.error) { showToast(data.error, 'error'); return; }
+                showToast('경로 로드: ' + routeId, 'success');
+                loadCameras();
+            } catch(e) {
+                showToast('Route load failed: ' + e.message, 'error');
+            }
+        }
+
+        loadRoutes();
         loadCameras();
     </script>
 </body>
