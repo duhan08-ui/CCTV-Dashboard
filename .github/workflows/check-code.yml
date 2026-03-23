@@ -2,24 +2,21 @@ name: AI-Agent-Check
 
 on:
   push:
-    branches: [ "main" ]  # main 브랜치에 변화가 있으면 실행
-  workflow_dispatch:      # 👈 이 줄이 있어야 [Run workflow] 버튼이 생깁니다!
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-
     - name: Run AI Agent
       env:
-        # 🔑 아까 등록한 Secrets 키를 연결합니다.
+        # 🔑 여기서 왼쪽 이름(GEMINI_API_KEY)이 파이썬 코드와 일치해야 합니다.
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
         python agent.py
