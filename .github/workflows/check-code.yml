@@ -19,7 +19,8 @@ jobs:
         python-version: '3.9'
 
     - name: Run AI Agent
-      # 🔑 이 env 설정이 없으면 403 에러(Unregistered callers)가 발생합니다.
+      # ⚠️ 핵심: 'env:'는 'name:'과 세로 줄이 딱 맞아야 합니다.
+      # ⚠️ 'GEMINI_API_KEY:'는 'env:'보다 두 칸 안으로 들어가야 합니다.
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: |
